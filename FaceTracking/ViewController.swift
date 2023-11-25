@@ -8,18 +8,12 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     var videoDataOutputQueue: DispatchQueue?
     var previewLayer: AVCaptureVideoPreviewLayer?
     var statusLabel: UILabel?
+    var infoLabel: UILabel?
     let faceMeasurement = FaceMeasurement()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let faceTrackingButton = UIButton(frame: CGRect(x: 100, y: 100, width: 200, height: 50))
-        faceTrackingButton.backgroundColor = .blue
-        faceTrackingButton.setTitle("Yüz Takibi Başlat", for: .normal)
-        
-        // Butonu görünüme ekleme
-        self.view.addSubview(faceTrackingButton)
-        
+
         
         setupCamera()
         setupUI()
@@ -109,42 +103,56 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     }
     
     func handleDetectedFaces(faces: [VNFaceObservation]) {
-           DispatchQueue.main.async {
-               // Önceki yüz çerçevelerini temizleyin
-               self.view.subviews.forEach { subview in
-                   if subview is FaceView {
-                       subview.removeFromSuperview()
-                   }
-               }
+        DispatchQueue.main.async {
+            // Önceki yüz çerçevelerini temizleyin
+            self.view.subviews.forEach { subview in
+                if subview is FaceView {
+                    subview.removeFromSuperview()
+                }
+            }
 
-               // Yeni tespit edilen yüzler için çerçeve oluşturun ve mesafe/açı hesaplayın
-               faces.forEach { faceObservation in
-                   var faceRect = self.transformBoundingBox(faceObservation.boundingBox)
-                   if faceRect.width > faceRect.height {
-                       faceRect.origin.y -= (faceRect.width - faceRect.height) / 2
-                       faceRect.size.height = faceRect.width
-                   } else {
-                       faceRect.origin.x -= (faceRect.height - faceRect.width) / 2
-                       faceRect.size.width = faceRect.height
-                   }
-                   let faceView = FaceView(frame: faceRect)
-                   self.view.addSubview(faceView)
-                   self.view.bringSubviewToFront(faceView)
+            // Yeni tespit edilen yüzler için çerçeve oluşturun
+            faces.forEach { faceObservation in
+                var faceRect = self.transformBoundingBox(faceObservation.boundingBox)
+                // Yüz çerçevesinin boyutunu ayarlayın
+                if faceRect.width > faceRect.height {
+                    faceRect.origin.y -= (faceRect.width - faceRect.height) / 2
+                    faceRect.size.height = faceRect.width
+                } else {
+                    faceRect.origin.x -= (faceRect.height - faceRect.width) / 2
+                    faceRect.size.width = faceRect.height
+                }
 
-                   // Mesafe ve açı hesaplamaları
-                   let distance = self.faceMeasurement.calculateDistance(from: faceRect, cameraFieldOfView: 60.0, knownFaceWidth: 0.14) // Örnek değerler
-                   let angle = self.faceMeasurement.calculateAngle(from: faceRect, in: self.view.bounds.size)
+                let faceView = FaceView(frame: faceRect)
+                self.view.addSubview(faceView)
+                self.view.bringSubviewToFront(faceView)
 
-                   // Hesaplanan değerleri göstermek için etiket ekleme (bu bir örnektir, uygulamanıza uygun şekilde düzenleyebilirsiniz)
-                   let infoLabel = UILabel(frame: CGRect(x: faceRect.origin.x, y: faceRect.origin.y - 30, width: faceRect.width, height: 30))
-                   infoLabel.text = String(format: "Mesafe: %.2f m, Açı: %.2f°", distance, angle)
-                   infoLabel.backgroundColor = .black
-                   infoLabel.textColor = .white
-                   infoLabel.textAlignment = .center
-                   self.view.addSubview(infoLabel)
-               }
-           }
-       }
+                // Mesafe ve açı hesaplamaları
+                let distance = self.faceMeasurement.calculateDistance(from: faceRect, cameraFieldOfView: 60.0, knownFaceWidth: 0.14)
+                let angle = self.faceMeasurement.calculateAngle(from: faceRect, in: self.view.bounds.size)
+
+                // Hesaplanan değerleri göstermek için etiket güncellemesi
+                self.updateInfoLabel(faceRect: faceRect, distance: distance, angle: angle)
+            }
+        }
+    }
+
+    func updateInfoLabel(faceRect: CGRect, distance: CGFloat, angle: CGFloat) {
+            // Yeni bir etiket oluşturmak yerine, mevcut etiketi güncelleyin
+            if infoLabel == nil {
+                infoLabel = UILabel()
+                infoLabel?.backgroundColor = .black
+                infoLabel?.textColor = .white
+                infoLabel?.textAlignment = .center
+                view.addSubview(infoLabel!)
+            }
+            infoLabel?.frame = CGRect(x: faceRect.origin.x, y: faceRect.origin.y - 30, width: faceRect.width, height: 30)
+        
+        let distanceInCm = distance * 1000
+
+        infoLabel?.text = String(format: "%.2f cm,  %.2f°", distanceInCm, angle)
+
+        }
 
     
     func transformBoundingBox(_ boundingBox: CGRect) -> CGRect {
@@ -181,26 +189,69 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         }
     }
     
-    class FaceMeasurement {
+class FaceMeasurement {
+    
+    // Bu metod, bir yüzün bounding box'ını alır ve yüzün kameraya olan mesafesini hesaplar (cm cinsinden)
+    
+    func calculateDistance(from boundingBox: CGRect, cameraFieldOfView: CGFloat, knownFaceWidth: CGFloat) -> CGFloat {
+        // Kamera açısını ve yüzün ekran üzerindeki genişliğini kullanarak mesafeyi hesaplayın
+        let faceWidthOnScreen = boundingBox.width * UIScreen.main.bounds.width
         
-        // Bu metod, bir yüzün bounding box'ını alır ve yüzün kameraya olan mesafesini hesaplar
-        func calculateDistance(from boundingBox: CGRect, cameraFieldOfView: CGFloat, knownFaceWidth: CGFloat) -> CGFloat {
-            // Kamera açısını ve yüzün ekran üzerindeki genişliğini kullanarak mesafeyi hesaplayın
-            // Bu sadece bir yaklaşımdır ve gerçek uygulamada kalibre edilmelidir
-            let faceWidthOnScreen = boundingBox.width
-            let distance = (knownFaceWidth / 2) / tan(cameraFieldOfView / 2 * .pi / 180) / faceWidthOnScreen
-            return distance
+        // Eğer faceWidthOnScreen 0 ise, hesaplama yapılmasın
+        guard faceWidthOnScreen != 0 else {
+            return 0
         }
         
-        // Bu metod, yüzün bounding box'ından yüzün kameraya olan açısını hesaplar
-        func calculateAngle(from boundingBox: CGRect, in viewSize: CGSize) -> CGFloat {
-            // Yüzün merkez noktasını bulun
-            let faceCenter = CGPoint(x: boundingBox.midX, y: boundingBox.midY)
-            // Yüzün merkezinin ekranın merkezine göre x koordinatındaki sapmasını hesaplayın
-            let viewCenter = CGPoint(x: viewSize.width / 2, y: viewSize.height / 2)
-            let angle = atan2(faceCenter.y - viewCenter.y, faceCenter.x - viewCenter.x) * 180 / .pi
-            return angle
-        }
+        // Fiziksel dünyadaki bilinen yüz genişliği (cm cinsinden)
+        let knownFaceWidthCm = knownFaceWidth * 100 // Metreyi santimetreye çevir
+        
+        // Mesafeyi hesaplama (cm cinsinden)
+        let distanceCm = (knownFaceWidthCm / faceWidthOnScreen) / (2 * tan(cameraFieldOfView / 2 * .pi / 180)) * UIScreen.main.bounds.width
+        return distanceCm
     }
     
+    // Bu metod, yüzün bounding box'ından yüzün kameraya olan açısını hesaplar
+    /*
+     func calculateAngle(from boundingBox: CGRect, in viewSize: CGSize) -> CGFloat {
+     // Yüzün merkez noktasını bulun
+     let faceCenter = CGPoint(x: boundingBox.midX, y: boundingBox.midY)
+     // Yüzün merkezinin ekranın merkezine göre x koordinatındaki sapmasını hesaplayın
+     let viewCenter = CGPoint(x: viewSize.width / 2, y: viewSize.height / 2)
+     let angle = atan2(faceCenter.y - viewCenter.y, faceCenter.x - viewCenter.x) * 180 / .pi
+     return angle
+     }
+     func calculateAngle(from boundingBox: CGRect, in viewSize: CGSize) -> CGFloat {
+     // Yüzün ekran üzerindeki yatay merkez noktasını, ekranın genişliğiyle orantılı olarak hesapla
+     let faceCenterX = boundingBox.midX * viewSize.width
+     
+     // Ekranın yatay orta noktasını bul
+     let screenMidX = viewSize.width / 2
+     
+     // Yüzün merkezi ile ekranın ortası arasındaki yatay farkı hesapla
+     let deltaX = faceCenterX - screenMidX
+     
+     // Bu farkı, ekranın genişliğinin yarısı ile orantılayarak -90 ile +90 derece arasında bir açıya dönüştür
+     let angle = (deltaX / (viewSize.width / 2)) * 90
+     
+     return angle
+     }*/
+    func calculateAngle(from boundingBox: CGRect, in viewSize: CGSize) -> CGFloat {
+        // Yüzün ekran üzerindeki yatay merkez noktasını hesapla (genişlik oranı olarak)
+        let faceCenterX = boundingBox.midX
+        
+        // Oranı ekranın yatay genişliğine dönüştür
+        let facePositionInScreen = faceCenterX * viewSize.width
+        
+        // Yüzün ekran merkezine olan yatay uzaklığını hesapla
+        let distanceFromCenter = facePositionInScreen - (viewSize.width / 2)
+        
+        // Uzaklığı ekran genişliğinin yarısına bölerek -1 ile +1 arasında bir oran elde et
+        let normalizedDistance = distanceFromCenter / (viewSize.width / 2)
+        
+        // Normalleştirilmiş mesafeyi -90 ile +90 derece arasında bir açıya çevir
+        
+        return normalizedDistance-360
+    }
+}
+        
 

@@ -13,7 +13,6 @@
 		71CD86FD2B0F857E002EB8F6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71CD86FB2B0F857E002EB8F6 /* Main.storyboard */; };
 		71CD86FF2B0F8580002EB8F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 71CD86FE2B0F8580002EB8F6 /* Assets.xcassets */; };
 		71CD87022B0F8580002EB8F6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71CD87002B0F8580002EB8F6 /* LaunchScreen.storyboard */; };
-		71CD870A2B0FFA3A002EB8F6 /* ARFaceTrackingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71CD87092B0FFA3A002EB8F6 /* ARFaceTrackingViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,7 +24,6 @@
 		71CD86FE2B0F8580002EB8F6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		71CD87012B0F8580002EB8F6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		71CD87032B0F8580002EB8F6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		71CD87092B0FFA3A002EB8F6 /* ARFaceTrackingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARFaceTrackingViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,7 +59,6 @@
 				71CD86F52B0F857E002EB8F6 /* AppDelegate.swift */,
 				71CD86F72B0F857E002EB8F6 /* SceneDelegate.swift */,
 				71CD86F92B0F857E002EB8F6 /* ViewController.swift */,
-				71CD87092B0FFA3A002EB8F6 /* ARFaceTrackingViewController.swift */,
 				71CD86FB2B0F857E002EB8F6 /* Main.storyboard */,
 				71CD86FE2B0F8580002EB8F6 /* Assets.xcassets */,
 				71CD87002B0F8580002EB8F6 /* LaunchScreen.storyboard */,
@@ -142,7 +139,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				71CD86FA2B0F857E002EB8F6 /* ViewController.swift in Sources */,
-				71CD870A2B0FFA3A002EB8F6 /* ARFaceTrackingViewController.swift in Sources */,
 				71CD86F62B0F857E002EB8F6 /* AppDelegate.swift in Sources */,
 				71CD86F82B0F857E002EB8F6 /* SceneDelegate.swift in Sources */,
 			);
